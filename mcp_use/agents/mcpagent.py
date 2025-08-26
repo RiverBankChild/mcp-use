@@ -481,14 +481,16 @@ class MCPAgent:
                         tool_name = action.tool
                         tools_used_names.append(tool_name)
                         tool_input_str = str(action.tool_input)
+
                         # Truncate long inputs for readability
-                        if len(tool_input_str) > 100:
-                            tool_input_str = tool_input_str[:97] + "..."
+                        if len(tool_input_str) > 200:
+                            tool_input_str = tool_input_str[:197] + "..."
                         logger.info(f"🔧 Tool call: {tool_name} with input: {tool_input_str}")
+
                         # Truncate long outputs for readability
                         observation_str = str(observation)
-                        if len(observation_str) > 100:
-                            observation_str = observation_str[:97] + "..."
+                        if len(observation_str) > 200:
+                            observation_str = observation_str[:197] + "..."
                         observation_str = observation_str.replace("\n", " ")
                         logger.info(f"📄 Tool result: {observation_str}")
 
