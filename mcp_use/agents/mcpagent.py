@@ -50,6 +50,7 @@ class MCPAgent:
         max_steps: int = 5,
         auto_initialize: bool = False,
         memory_enabled: bool = True,
+        memory_window: int = 5,
         system_prompt: str | None = None,
         system_prompt_template: str | None = None,  # User can still override the template
         additional_instructions: str | None = None,
@@ -78,6 +79,7 @@ class MCPAgent:
         self.max_steps = max_steps
         self.auto_initialize = auto_initialize
         self.memory_enabled = memory_enabled
+        self.memory_window = memory_window
         self._initialized = False
         self._conversation_history: list[BaseMessage] = []
         self.disallowed_tools = disallowed_tools or []
@@ -240,18 +242,16 @@ class MCPAgent:
         if self._system_message and self.memory_enabled:
             self._conversation_history = [self._system_message]
 
+
     def add_to_history(self, message: BaseMessage) -> None:
         """Add a message to the conversation history with a fixed window size."""
         if self.memory_enabled:
             self._conversation_history.append(message)
-
-            # --- 修改建议 ---
-            # 这种实现方式更健壮，不再依赖于SystemMessage必须在列表的第一个位置。
             
-            MEMORY_WINDOW_PAIRS = 5
-            MAX_CONVERSATIONAL_MESSAGES = MEMORY_WINDOW_PAIRS * 2
+            # 1. 使用初始化时传入的参数动态计算最大消息数
+            MAX_CONVERSATIONAL_MESSAGES = self.memory_window * 2
 
-            # 1. 使用列表推导式，安全地分离系统消息和真正的对话消息
+            # 2. 安全地分离系统消息和真正的对话消息
             system_messages = [
                 msg for msg in self._conversation_history if isinstance(msg, SystemMessage)
             ]
@@ -259,14 +259,19 @@ class MCPAgent:
                 msg for msg in self._conversation_history if not isinstance(msg, SystemMessage)
             ]
 
-            # 2. 仅对对话消息部分进行裁剪
+            # 3. 仅对对话消息部分进行裁剪
             if len(conversation_messages) > MAX_CONVERSATIONAL_MESSAGES:
                 # 只保留最新的对话消息
                 trimmed_conversation = conversation_messages[-MAX_CONVERSATIONAL_MESSAGES:]
             else:
                 trimmed_conversation = conversation_messages
 
-            # 3. 重建历史记录，将所有系统消息（通常只有一个）放回开头，然后跟上裁剪后的对话
+            # 4. 检查并确保裁剪后的历史记录不是以AI消息开头
+            if trimmed_conversation and isinstance(trimmed_conversation[0], AIMessage):
+                # 如果第一条是AI消息，则将其移除
+                trimmed_conversation.pop(0)
+
+            # 5. 重建历史记录，将系统消息放回开头，然后跟上修正并裁剪后的对话
             self._conversation_history = system_messages + trimmed_conversation
 
     def get_system_message(self) -> SystemMessage | None:
