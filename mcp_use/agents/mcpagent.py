@@ -474,6 +474,7 @@ class MCPAgent:
                     if isinstance(next_step_output, AgentFinish):
                         logger.info(f"✅ Agent finished at step {step_num + 1}")
                         result = next_step_output.return_values.get("output", "No output generated")
+                        logger.info(f"✨ Agent final result: {result}")
                         break
 
                     # If it's actions/steps, add to intermediate steps and yield them
