@@ -57,6 +57,7 @@ class MCPAgent:
         disallowed_tools: list[str] | None = None,
         use_server_manager: bool = False,
         verbose: bool = False,
+        handle_parsing_errors: bool = True, 
     ):
         """Initialize a new MCPAgent instance.
 
@@ -85,6 +86,7 @@ class MCPAgent:
         self.disallowed_tools = disallowed_tools or []
         self.use_server_manager = use_server_manager
         self.verbose = verbose
+        self.handle_parsing_errors = handle_parsing_errors
         # System prompt configuration
         self.system_prompt = system_prompt  # User-provided full prompt override
         # User can provide a template override, otherwise use the imported default
@@ -222,7 +224,7 @@ class MCPAgent:
         agent = create_tool_calling_agent(llm=self.llm, tools=self._tools, prompt=prompt)
 
         # Use the standard AgentExecutor
-        executor = AgentExecutor(agent=agent, tools=self._tools, max_iterations=self.max_steps, verbose=self.verbose)
+        executor = AgentExecutor(agent=agent, tools=self._tools, max_iterations=self.max_steps, verbose=self.verbose, handle_parsing_errors=self.handle_parsing_errors)
         logger.debug(f"Created agent executor with max_iterations={self.max_steps}")
         return executor
 
